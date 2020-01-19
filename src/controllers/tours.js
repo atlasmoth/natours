@@ -38,7 +38,7 @@ exports.updateTour = catchAsync(async (req, res, next) => {
   const tour = await Tour.findByIdAndUpdate(
     req.params.id,
     { ...req.body },
-    { new: true }
+    { new: true, runValidators: true }
   );
   res.send({
     success: true,
@@ -92,12 +92,23 @@ exports.getBusy = catchAsync(async (req, res, next) => {
     {
       $group: {
         _id: { $month: "$startDates" },
-        numTours: { $sum: 1 }
+        numTours: { $sum: 1 },
+        tours: { $push: "$name" }
       }
     },
     {
       $sort: {
         numTours: -1
+      }
+    },
+    {
+      $addFields: {
+        month: "$_id"
+      }
+    },
+    {
+      $project: {
+        _id: 0
       }
     }
   ]);

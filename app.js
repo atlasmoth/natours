@@ -4,7 +4,7 @@ require("dotenv").config({
 });
 const express = require("express");
 const morgan = require("morgan");
-
+const errorResponse = require("./src/utils/errorResponse");
 const tourRouter = require(path.join(__dirname, "/src/routes/tours"));
 const userRouter = require(path.join(__dirname, "/src/routes/users"));
 
@@ -19,11 +19,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/tours", tourRouter);
 app.use("/api/v1/users", userRouter);
 // Middleware for handling catch all
-app.all("*", (req, res) => {
-  res.send("Ikebe will rule us all");
+app.all("*", (req, res, next) => {
+  next(new errorResponse(404, "Wrong route"));
 });
 app.use((err, req, res, next) => {
-  res.send(err.message);
+  res.status(err.statusCode || 400).send(err.message);
 });
 // Server and database set up
 require("./config/db")
@@ -34,3 +34,13 @@ require("./config/db")
     );
   })
   .catch(e => console.log(e.message));
+
+process.on("unhandledRejection", function(error) {
+  console.log(error.message);
+  process.exit(1);
+});
+
+process.on("uncaughtException", function(error) {
+  console.log(error.message);
+  process.exit(1);
+});

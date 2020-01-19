@@ -1,10 +1,13 @@
 const mongoose = require("mongoose");
+const slugify = require("slugify");
 const tourSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: [true, "Tours must have a name"],
-      unique: true
+      unique: true,
+      trim: true,
+      maxlength: [40, "Tour name cannot exceed 40 characters"]
     },
     duration: {
       type: Number,
@@ -17,7 +20,10 @@ const tourSchema = new mongoose.Schema(
     difficulty: {
       type: String,
       default: "easy",
-      enum: ["easy", "medium", "difficult"]
+      enum: {
+        values: ["easy", "medium", "difficult"],
+        message: "Difficulty must be easy, medium or difficult"
+      }
     },
     price: {
       type: Number,
@@ -35,7 +41,15 @@ const tourSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
-    priceDiscount: Number,
+    priceDiscount: {
+      type: Number,
+      validate: {
+        validator: function(val) {
+          return val < this.price;
+        },
+        message: "Discount should be below regular price"
+      }
+    },
     summary: {
       type: String,
       trim: true
@@ -58,5 +72,14 @@ const tourSchema = new mongoose.Schema(
     toObject: { virtuals: true }
   }
 );
+tourSchema.virtual("durationWeeks").get(function() {
+  return this.duration / 7;
+});
+tourSchema.pre("save", function(next) {
+  // only works on save and create
+  this.slug = slugify(this.name, { lower: true });
+  next();
+});
+// query middleware
 
 module.exports = mongoose.model("Tour", tourSchema);
