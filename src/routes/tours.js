@@ -4,12 +4,13 @@ const { createTour, getTours, getStats, getBusy } = require(path.join(
   __dirname,
   "/../controllers/tours"
 ));
+const { protect } = require("./../controllers/authController");
 const router = express.Router();
 router.route("/busy-month/:year").get(getBusy);
 router.route("/tour-stats").get(getStats);
 router
   .route("/")
-  .get(getTours)
+  .get(protect, getTours)
   .post(createTour);
 
 router
