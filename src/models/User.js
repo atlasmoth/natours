@@ -62,6 +62,7 @@ userSchema.pre("save", async function(next) {
 });
 userSchema.methods.checkPassword = function(newPassword) {
   // password comparison
+
   return bcrypt.compare(newPassword, this.password);
 };
 userSchema.methods.tokenGenerator = function() {

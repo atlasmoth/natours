@@ -34,7 +34,6 @@ exports.login = catchAsync(async (req, res, next) => {
 
   res.status(201).send({
     success: true,
-    user,
     token
   });
 });
@@ -126,6 +125,37 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   user.resetTokenExpires = undefined;
   await user.save();
 
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES
+  });
+
+  res.status(201).send({
+    success: true,
+    token
+  });
+});
+
+exports.updateUser = catchAsync(async (req, res, next) => {
+  // updating parts of a current loggedin user
+  const { password } = req.body;
+  const user = await User.findById(req.user._id)
+    .select("+password")
+    .exec();
+
+  const check = await user.checkPassword(password);
+  if (!check) {
+    return next(new errorResponse(400, "Invalid Password"));
+  }
+  const params = Object.keys(req.body).filter(item => item !== "password");
+
+  params.forEach(param => {
+    if (param === "newPassword") {
+      user.password = req.body[param];
+    } else {
+      user[param] = req.body[param];
+    }
+  });
+  await user.save();
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES
   });
