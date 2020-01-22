@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -37,7 +39,14 @@ const userSchema = new mongoose.Schema(
     photo: {
       type: String,
       default: "avatar.png"
-    }
+    },
+    role: {
+      type: String,
+      enum: ["user", "guide", "lead-guide", "admin"],
+      default: "user"
+    },
+    resetToken: String,
+    resetTokenExpires: Date
   },
   {
     timestamps: true
@@ -51,9 +60,19 @@ userSchema.pre("save", async function(next) {
   }
   next();
 });
-userSchema.methods.checkPassword = async function(newPassword) {
+userSchema.methods.checkPassword = function(newPassword) {
   // password comparison
   return bcrypt.compare(newPassword, this.password);
 };
+userSchema.methods.tokenGenerator = function() {
+  const token = crypto.randomBytes(32).toString("hex");
 
+  this.resetToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  this.resetTokenExpires = Date.now() + 10 * 60 * 1000;
+  return token;
+};
 module.exports = mongoose.model("User", userSchema);
