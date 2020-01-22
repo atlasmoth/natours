@@ -46,12 +46,21 @@ const userSchema = new mongoose.Schema(
       default: "user"
     },
     resetToken: String,
-    resetTokenExpires: Date
+    resetTokenExpires: Date,
+    active: {
+      type: Boolean,
+      default: true,
+      select: false
+    }
   },
   {
     timestamps: true
   }
 );
+userSchema.pre(/^find/, function(next) {
+  this.find({ active: { $ne: false } });
+  next();
+});
 userSchema.pre("save", async function(next) {
   //password hashing
   if (this.isModified("password")) {

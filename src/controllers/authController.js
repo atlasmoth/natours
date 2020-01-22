@@ -9,18 +9,11 @@ const sendEmail = require(path.join(__dirname, "/../utils/email"));
 
 exports.signUp = catchAsync(async (req, res, next) => {
   const user = await User.create(req.body);
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES
-  });
-
-  res.status(201).send({
-    success: true,
-    user,
-    token
-  });
+  sendCookieResponse(user, res, 201);
 });
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+  console.log(email);
   const user = await User.findOne({ email })
     .select("+password")
     .exec();
@@ -28,14 +21,7 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!user || !(await user.checkPassword(password))) {
     return next(new errorResponse(400, "User doesn't exist"));
   }
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES
-  });
-
-  res.status(201).send({
-    success: true,
-    token
-  });
+  sendCookieResponse(user, res, 200);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -124,15 +110,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   user.resetToken = undefined;
   user.resetTokenExpires = undefined;
   await user.save();
-
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES
-  });
-
-  res.status(201).send({
-    success: true,
-    token
-  });
+  sendCookieResponse(user, res, 200);
 });
 
 exports.updateUser = catchAsync(async (req, res, next) => {
@@ -156,12 +134,29 @@ exports.updateUser = catchAsync(async (req, res, next) => {
     }
   });
   await user.save();
+  sendCookieResponse(user, res, 201);
+});
+
+exports.deleteMe = catchAsync(async (req, res, next) => {
+  await User.findByIdAndUpdate(req.user._id, { active: false });
+  res.status(204).json({
+    success: true,
+    data: null
+  });
+});
+
+function sendCookieResponse(user, res, statusCode) {
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES
   });
 
-  res.status(201).send({
+  res.cookie("jwt", token, {
+    expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+    secure: process.env.NODE_ENV === "production" ? true : false,
+    httpOnly: true
+  });
+  res.status(statusCode).send({
     success: true,
     token
   });
-});
+}

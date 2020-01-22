@@ -7,18 +7,45 @@ const morgan = require("morgan");
 const errorResponse = require("./src/utils/errorResponse");
 const tourRouter = require(path.join(__dirname, "/src/routes/tours"));
 const userRouter = require(path.join(__dirname, "/src/routes/users"));
+const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
+const xss = require("xss-clean");
+const mongoSanitize = require("express-mongo-sanitize");
+const hpp = require("hpp");
 
 const app = express();
-
+const limiter = rateLimit({
+  max: 1000,
+  windowMs: 60 * 60 * 1000,
+  message: "Too many requests from this IP, please try again in an hour."
+});
 // Middleware setup
+app.use(helmet());
 app.use(morgan("dev"));
-app.use(express.json());
+
 app.use(express.static("./public"));
 app.use(express.urlencoded({ extended: true }));
 // routes middleware
+app.use("/api", limiter);
+app.use(express.json({ limit: "10kb" }));
+app.use(mongoSanitize());
+app.use(xss());
+app.use(
+  hpp({
+    whitelist: [
+      "duration",
+      "ratingsQuantity",
+      "ratingsAverage",
+      "price",
+      "maxGroupSize",
+      "difficulty"
+    ]
+  })
+);
+
 app.use("/api/v1/tours", tourRouter);
 app.use("/api/v1/users", userRouter);
-// Middleware for handling catch all
+// Middleware  catch all
 app.all("*", (req, res, next) => {
   next(new errorResponse(404, "Wrong route"));
 });
