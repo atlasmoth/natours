@@ -5,7 +5,6 @@ const reviewSchema = new mongoose.Schema(
     review: {
       type: String,
       trim: [true, "Review cannot be empty"],
-      maxlength: 150,
       required: true
     },
     rating: {
@@ -31,15 +30,12 @@ const reviewSchema = new mongoose.Schema(
     toObject: { virtuals: true }
   }
 );
+
 reviewSchema.pre(/^find/, function(next) {
   this.populate({
     path: "user",
     model: "User",
     select: "name photo"
-  }).populate({
-    path: "tour",
-    select: "name",
-    model: "Tour"
   });
   next();
 });
@@ -48,6 +44,6 @@ reviewSchema.index(
     tour: 1,
     user: 1
   },
-  { unique: [true, "User can only leave 1 review on each tour"] }
+  { unique: true }
 );
 module.exports = mongoose.model("Review", reviewSchema);

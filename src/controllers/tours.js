@@ -2,6 +2,7 @@ const path = require("path");
 const Tour = require(path.join(__dirname, "/../models/Tour"));
 const catchAsync = require("./../utils/catchAsync");
 const apiFeatures = require("./../utils/apiFeatures");
+const errorResponse = require("./../utils/errorResponse");
 
 exports.getTours = catchAsync(async (req, res, next) => {
   const api = new apiFeatures(Tour, req.query);
@@ -18,7 +19,6 @@ exports.getTours = catchAsync(async (req, res, next) => {
   });
 });
 exports.createTour = catchAsync(async (req, res, next) => {
-  res.send("Ikebe wins!");
   const tour = await Tour.create(req.body);
   res.send({
     success: true,
@@ -28,6 +28,9 @@ exports.createTour = catchAsync(async (req, res, next) => {
 
 exports.getTour = catchAsync(async (req, res, next) => {
   const tour = await Tour.findById(req.params.id);
+  if (!tour) {
+    return next(new errorResponse(400, "Invalid ID"));
+  }
   res.send({
     success: true,
     data: tour
@@ -40,6 +43,9 @@ exports.updateTour = catchAsync(async (req, res, next) => {
     { ...req.body },
     { new: true, runValidators: true }
   );
+  if (!tour) {
+    return next(new errorResponse(400, "Invalid ID"));
+  }
   res.send({
     success: true,
     data: tour
@@ -115,5 +121,16 @@ exports.getBusy = catchAsync(async (req, res, next) => {
   res.send({
     success: true,
     data: stats
+  });
+});
+
+exports.deleteTour = catchAsync(async (req, res, next) => {
+  const tour = await Tour.findByIdAndDelete(req.params.id);
+  if (!tour) {
+    return next(new errorResponse(400, "Wrong ID"));
+  }
+  res.status(204).send({
+    success: true,
+    data: null
   });
 });

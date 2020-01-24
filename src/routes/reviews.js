@@ -4,7 +4,7 @@ const { createReview, getReviews } = require(path.join(
   __dirname,
   "/../controllers/reviews"
 ));
-const { protect, restrict } = require("./../controllers/authController");
+const { protect } = require("./../controllers/authController");
 
 const router = express.Router({ mergeParams: true });
 router

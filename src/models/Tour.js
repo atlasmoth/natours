@@ -102,6 +102,12 @@ const tourSchema = new mongoose.Schema(
     toObject: { virtuals: true }
   }
 );
+// virtual populate
+tourSchema.virtual("reviews", {
+  localField: "_id",
+  foreignField: "tour",
+  ref: "Review"
+});
 tourSchema.virtual("durationWeeks").get(function() {
   return this.duration / 7;
 });
@@ -115,6 +121,12 @@ tourSchema.pre(/^find/, function(next) {
   this.populate({
     path: "guides",
     model: "User"
+  });
+  next();
+});
+tourSchema.pre("findOne", function(next) {
+  this.populate({
+    path: "reviews"
   });
   next();
 });
