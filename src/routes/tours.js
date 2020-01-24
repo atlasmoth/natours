@@ -5,14 +5,17 @@ const { createTour, getTours, getStats, getBusy } = require(path.join(
   "/../controllers/tours"
 ));
 const { protect, restrict } = require("./../controllers/authController");
+const reviewRouter = require(path.join(__dirname, "/reviews"));
+
 const router = express.Router();
+router.use("/reviews", reviewRouter);
 router.route("/busy-month/:year").get(getBusy);
 router.route("/tour-stats").get(getStats);
 router
   .route("/")
   .get(protect, getTours)
   .post(createTour);
-
+router.use("/:id/reviews", reviewRouter);
 router
   .route("/:id")
   .get()

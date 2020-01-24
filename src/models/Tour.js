@@ -64,7 +64,37 @@ const tourSchema = new mongoose.Schema(
       required: [true, "A tour must have a cover image"]
     },
     images: [{ type: String }],
-    startDates: [{ type: Date }]
+    startDates: [{ type: Date }],
+    startLocation: {
+      type: {
+        type: String,
+        default: "Point",
+        enum: ["Point"]
+      },
+      coordiantes: [Number],
+      address: String,
+      description: String
+    },
+    locations: [
+      {
+        type: {
+          type: String,
+          default: "Point",
+          enum: ["Point"]
+        },
+        coordiantes: [Number],
+        address: String,
+        description: String,
+        day: Number
+      }
+    ],
+    guides: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      }
+    ],
+    slug: String
   },
   {
     timestamps: true,
@@ -81,5 +111,11 @@ tourSchema.pre("save", function(next) {
   next();
 });
 // query middleware
-
+tourSchema.pre(/^find/, function(next) {
+  this.populate({
+    path: "guides",
+    model: "User"
+  });
+  next();
+});
 module.exports = mongoose.model("Tour", tourSchema);
