@@ -21,11 +21,10 @@ exports.createReview = catchAsync(async (req, res, next) => {
   });
 });
 exports.getReviews = catchAsync(async (req, res, next) => {
-  console.log(req.params);
-  return res.send("Ikebe di nu oku nu");
-  const reviewObjs = await Review.find({ user: req.user._id });
+  const reviewObjs = await Review.find({ tour: req.params.id });
   res.send({
     success: true,
+    length: reviewObjs.length,
     data: reviewObjs
   });
 });

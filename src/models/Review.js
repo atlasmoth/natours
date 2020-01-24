@@ -31,5 +31,23 @@ const reviewSchema = new mongoose.Schema(
     toObject: { virtuals: true }
   }
 );
-
+reviewSchema.pre(/^find/, function(next) {
+  this.populate({
+    path: "user",
+    model: "User",
+    select: "name photo"
+  }).populate({
+    path: "tour",
+    select: "name",
+    model: "Tour"
+  });
+  next();
+});
+reviewSchema.index(
+  {
+    tour: 1,
+    user: 1
+  },
+  { unique: [true, "User can only leave 1 review on each tour"] }
+);
 module.exports = mongoose.model("Review", reviewSchema);
