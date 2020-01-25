@@ -134,3 +134,24 @@ exports.deleteTour = catchAsync(async (req, res, next) => {
     data: null
   });
 });
+
+exports.getNearby = catchAsync(async (req, res, next) => {
+  // ikebe shall save us all
+  const { distance, center, unit } = req.params;
+  const [lat, lng] = center.split(",");
+  const radius = unit === "mi" ? distance / 3963.2 : distance / 6378.1;
+  if (!lat || !lng) {
+    return next(
+      new errorResponse(400, "Please provide latitude and longitude")
+    );
+  }
+
+  const tours = await Tour.find({
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } }
+  });
+  res.send({
+    length: tours.length,
+    success: true,
+    data: tours
+  });
+});

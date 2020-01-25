@@ -68,10 +68,9 @@ const tourSchema = new mongoose.Schema(
     startLocation: {
       type: {
         type: String,
-        default: "Point",
         enum: ["Point"]
       },
-      coordiantes: [Number],
+      coordinates: [Number],
       address: String,
       description: String
     },
@@ -79,10 +78,9 @@ const tourSchema = new mongoose.Schema(
       {
         type: {
           type: String,
-          default: "Point",
           enum: ["Point"]
         },
-        coordiantes: [Number],
+        coordinates: [Number],
         address: String,
         description: String,
         day: Number
@@ -103,6 +101,9 @@ const tourSchema = new mongoose.Schema(
   }
 );
 // virtual populate
+tourSchema.index({
+  startLocation: "2dsphere"
+});
 tourSchema.virtual("reviews", {
   localField: "_id",
   foreignField: "tour",
