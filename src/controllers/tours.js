@@ -147,11 +147,49 @@ exports.getNearby = catchAsync(async (req, res, next) => {
   }
 
   const tours = await Tour.find({
-    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } }
+    startLocation: {
+      $geoWithin: { $centerSphere: [[Number(lng), Number(lat)], radius] }
+    }
   });
   res.send({
     length: tours.length,
     success: true,
     data: tours
+  });
+});
+
+exports.getDistance = catchAsync(async (req, res, next) => {
+  // returns distance in kilometers
+  const { latlng } = req.params;
+  const [lat, lng] = latlng.split(",");
+  if (!lat || !lng) {
+    return next(
+      new errorResponse(400, "Please provide latitude and longitude")
+    );
+  }
+  // geoNear always needs to be the first stage in the aggregation pipeline
+  const distances = await Tour.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: "Point",
+          coordinates: [Number(lng), Number(lat)]
+        },
+        distanceField: "distance",
+        distanceMultiplier: 0.001,
+        spherical: true
+      }
+    },
+    {
+      $project: {
+        distance: 1,
+        name: 1
+      }
+    }
+  ]);
+  res.send({
+    length: distances.length,
+    success: true,
+    data: distances
   });
 });

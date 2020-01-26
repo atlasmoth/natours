@@ -14,18 +14,24 @@ const mongoSanitize = require("express-mongo-sanitize");
 const hpp = require("hpp");
 
 const app = express();
+// setting up templates
+app.set("view engine", "pug");
+app.set("views", path.join(__dirname, "/views"));
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "/public")));
+
+// some weird shit
+// Middleware setup
+app.use(helmet());
+app.use(morgan("dev"));
+
+// routes middleware
 const limiter = rateLimit({
   max: 1000,
   windowMs: 60 * 60 * 1000,
   message: "Too many requests from this IP, please try again in an hour."
 });
-// Middleware setup
-app.use(helmet());
-app.use(morgan("dev"));
-
-app.use(express.static("./public"));
-app.use(express.urlencoded({ extended: true }));
-// routes middleware
 app.use("/api", limiter);
 app.use(express.json({ limit: "10kb" }));
 app.use(mongoSanitize());

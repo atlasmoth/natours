@@ -7,7 +7,8 @@ const {
   getBusy,
   deleteTour,
   updateTour,
-  getNearby
+  getNearby,
+  getDistance
 } = require(path.join(__dirname, "/../controllers/tours"));
 const { protect, restrict } = require("./../controllers/authController");
 const reviewRouter = require(path.join(__dirname, "/reviews"));
@@ -24,6 +25,7 @@ router.use("/:id/reviews", reviewRouter);
 
 // protect routes using middleware
 router.get("/nearby-tours/:distance/center/:center/unit/:unit", getNearby);
+router.get("/distance/:latlng", getDistance);
 router.use(protect);
 router.use(restrict("admin", "lead-guide"));
 
